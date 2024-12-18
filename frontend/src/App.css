@@ -1,0 +1,137 @@
+.App {
+    text-align: center;
+}
+
+.header{
+    color: #0a3622;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login_page{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.login_card{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 10px;
+    margin-top: 300px;
+    width: 240px;
+    padding: 30px;
+}
+.login_info{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: stretch;
+    width: 100%;
+}
+
+.login_text{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+.login_text input{
+    border-radius: 10px;
+    height: 45px;
+    background-color: #ebebeb;
+    border: 1px solid #ebebeb;
+    padding-left: 20px;
+}
+
+.login_button{
+    border-radius: 10px;
+    color: white;
+    height: 45px;
+    width: 100%;
+    background-color: #439f47;
+    border: 1px solid #439f47;
+}
+
+table{
+    width: 100%;
+}
+
+thead{
+    background-color: #75b752;
+    color:white;
+}
+
+tr:nth-of-type(odd) td {
+    background-color: #eee;
+}
+tr:nth-of-type(even) td {
+    background-color: white;
+}
+
+.pagination{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.pagination .arrow{
+    width: 46px;
+    font-size: 18px;
+}
+
+.pagination button{
+    border-radius: 18px;
+    border: 2px solid #75b752;
+    color: white;
+    background-color: #75b752;
+    margin: 0 5px;
+    padding: 8px 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    outline: none;
+}
+
+.pagination button:hover {
+    background-color: #388d3c;
+    border-color: #388d3c;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.pagination button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pagination button:disabled {
+    visibility: hidden;
+}
+
+.pagination button.active {
+    background-color: #388d3c;
+    border-color: #388d3c;
+    cursor: default;
+    box-shadow: none;
+}
+.pagination span {
+    border-radius: 16px;
+    border: 2px solid #75b752;
+    color: white;
+    background-color: #75b752;
+    margin: 0 5px;
+    padding: 8px 12px;
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+

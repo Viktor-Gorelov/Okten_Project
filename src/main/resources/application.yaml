@@ -1,0 +1,6 @@
+jwt:
+  secret: wIsmGMq7PwPhXCP5MpU2xi6O8Yptziwm
+  access-token:
+    ttl-millis: 3600000
+  refresh-token:
+    ttl-millis: 360000000

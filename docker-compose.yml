@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./backend:/app
+    ports:
+      - "1234:8080"
+    restart: on-failure
+    command: >
+      sh -c "java -jar app.jar"
+
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./client:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
