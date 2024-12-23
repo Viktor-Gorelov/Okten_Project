@@ -10,8 +10,8 @@ const OrdersComponent: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const currentPage = parseInt(searchParams.get('page') || '0', 10);
-    const sortField = searchParams.get('sortField') || 'id';
-    const sortOrder = searchParams.get('sortOrder') || 'asc';
+    const sortField = searchParams.get('sortField') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
     const navigate = useNavigate();
 
 
