@@ -9,7 +9,7 @@ const OrdersComponent: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const currentPage = parseInt(searchParams.get('page') || '0', 10);
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const navigate = useNavigate();
@@ -27,7 +27,7 @@ const OrdersComponent: React.FC = () => {
                 }
 
                 const response = await fetch(
-                    `/api/orders?page=${currentPage}&size=25&sortField=${sortField}&sortOrder=${sortOrder}`,
+                    `/api/orders?page=${currentPage - 1}&size=25&sortField=${sortField}&sortOrder=${sortOrder}`,
                     {
                         method: 'GET',
                         headers: {
@@ -51,7 +51,7 @@ const OrdersComponent: React.FC = () => {
     }, [currentPage, sortField, sortOrder]);
 
     const handlePageChange = (newPage: number) => {
-        setSearchParams({ page: newPage.toString(), sortField, sortOrder });
+        setSearchParams({ page: (newPage).toString(), sortField, sortOrder });
     };
 
     const handleSort = (field: string) => {
@@ -64,7 +64,7 @@ const OrdersComponent: React.FC = () => {
         const sortFieldToSend = fieldMap[field] || field;
         const newSortOrder = sortField === sortFieldToSend && sortOrder === 'asc' ? 'desc' : 'asc';
 
-        setSearchParams({ page: currentPage.toString(), sortField: sortFieldToSend, sortOrder: newSortOrder });
+        setSearchParams({ page: "1", sortField: sortFieldToSend, sortOrder: newSortOrder });
     };
 
     const isTokenExpired = (token: string): boolean => {
@@ -90,25 +90,25 @@ const OrdersComponent: React.FC = () => {
         const halfVisible = Math.floor(maxVisiblePages / 2);
 
         if (totalPages <= maxVisiblePages) {
-            for (let i = 0; i < totalPages; i++) {
+            for (let i = 1; i < totalPages; i++) {
                 pages.push(i);
             }
         } else if (currentPage <= halfVisible) {
-            for (let i = 0; i < maxVisiblePages - 1; i++) {
+            for (let i = 1; i < maxVisiblePages - 1; i++) {
                 pages.push(i);
             }
-            pages.push('...', totalPages - 1);
+            pages.push('...', totalPages);
         } else if (currentPage >= totalPages - halfVisible - 1) {
-            pages.push(0, '...');
-            for (let i = totalPages - maxVisiblePages + 1; i < totalPages; i++) {
+            pages.push(1, '...');
+            for (let i = totalPages - maxVisiblePages + 1; i < totalPages + 1; i++) {
                 pages.push(i);
             }
         } else {
-            pages.push(0, '...');
+            pages.push(1, '...');
             for (let i = currentPage - halfVisible + 1; i <= currentPage + halfVisible - 1; i++) {
                 pages.push(i);
             }
-            pages.push('...', totalPages - 1);
+            pages.push('...', totalPages);
         }
         return pages;
     };
@@ -166,7 +166,7 @@ const OrdersComponent: React.FC = () => {
                 </tbody>
             </table>
             <div className="pagination">
-                {currentPage > 0 && (
+                {currentPage > 1 && (
                     <button className='arrow' onClick={() => handlePageChange(currentPage - 1)}>
                         &#60;
                     </button>
@@ -175,16 +175,16 @@ const OrdersComponent: React.FC = () => {
                     typeof page === 'number' ? (
                         <button
                             key={index}
-                            className={page === currentPage ? 'active' : ''}
+                            className={page === currentPage? 'active' : ''}
                             onClick={() => handlePageChange(page)}
                         >
-                            {page + 1}
+                            {page}
                         </button>
                     ) : (
                         <span key={index}>...</span>
                     )
                 )}
-                {currentPage + 1 < totalPages && (
+                {currentPage + 1 < totalPages + 1 && (
                     <button className='arrow' onClick={() => handlePageChange(currentPage + 1)}>
                         &#62;
                     </button>

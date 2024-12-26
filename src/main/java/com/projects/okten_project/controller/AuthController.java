@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -31,6 +33,23 @@ public class AuthController {
 
     private final JwtUtil jwtUtil;
 
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponseDTO> refreshAccessToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+
+        String username = jwtUtil.extractUsername(refreshToken);
+        UserDetails userDetails = userService.loadUserByUsername(username);
+
+        String newAccessToken = jwtUtil.generateAccessToken(userDetails);
+        String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
+
+        return ResponseEntity.ok(
+                AuthResponseDTO.builder()
+                        .accessToken(newAccessToken)
+                        .refreshToken(newRefreshToken)
+                        .build()
+        );
+    }
     @PostMapping("/signup")
     public ResponseEntity<SignUpResponseDTO> signUp(@RequestBody @Valid SignUpRequestDTO signUpRequestDto) {
         SignUpResponseDTO signUpResponseDto = userService.createAuthorizeUser(signUpRequestDto, UserRole.ADMIN);

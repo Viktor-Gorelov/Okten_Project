@@ -38,6 +38,31 @@
 		},
 		{
 			"name": "Authorization Admin",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const res = pm.response.json();\r",
+							"\r",
+							"pm.environment.set(\"accessToken\", res.accessToken);\r",
+							"pm.environment.set(\"refreshToken\", res.refreshToken);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "noauth"
@@ -64,6 +89,51 @@
 						"api",
 						"auth",
 						"signin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get refresh token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const res = pm.response.json();\r",
+							"\r",
+							"pm.environment.set(\"accessToken\", res.accessToken);\r",
+							"pm.environment.set(\"refreshToken\", res.refreshToken);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"refreshToken\": \"{{refreshToken}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:80/api/auth/refresh",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"auth",
+						"refresh"
 					]
 				}
 			},
@@ -197,7 +267,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJzdWIiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3MzQ0NDQ5MTMsImV4cCI6MTczNDQ0ODUxM30.h006mC3PAXrpaPGdnJxoY6xtVLgCAOi9hKCvp8WJ06c",
+				"value": "{{accessToken}}",
 				"type": "string"
 			}
 		]
@@ -219,9 +289,31 @@
 				"type": "text/javascript",
 				"packages": {},
 				"exec": [
-					""
+					"pm.test(\"Status code is 200\", function () {\r",
+					"    pm.response.to.have.status(200);\r",
+					"});\r",
+					"\r",
+					"const response = pm.response.json();\r",
+					"\r",
+					"pm.environment.set(\"accessToken\", response.accessToken);\r",
+					"pm.environment.set(\"refreshToken\", response.refreshToken);\r",
+					"\r",
+					"console.log(\"Access Token:\", response.accessToken);\r",
+					"console.log(\"Refresh Token:\", response.refreshToken);"
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
 		}
 	]
 }

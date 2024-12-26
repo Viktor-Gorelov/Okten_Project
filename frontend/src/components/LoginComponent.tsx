@@ -8,9 +8,42 @@ const LoginComponent = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+
+    const validateForm = (): boolean => {
+        if (!email.trim()) {
+            setError('Email is required.');
+            return false;
+        }
+
+        if (!/\S+@\S+\.\S+/.test(email)) {
+            setError('Invalid email format.');
+            return false;
+        }
+        if (email.length < 8) {
+            setError('Email must be at least 8 characters long.');
+            return false;
+        }
+
+
+        if (!password.trim()) {
+            setError('Password is required.');
+            return false;
+        }
+
+        if (password.length < 4) {
+            setError('Password must be at least 4 characters long.');
+            return false;
+        }
+
+        setError('');
+        return true;
+    };
     const handleLogin = async (event: { preventDefault: () => void; }) => {
         event.preventDefault();
-        setError('');
+
+        if (!validateForm()) {
+            return;
+        }
 
         try {
             const response = await fetch('/api/auth/signin', {
@@ -48,7 +81,7 @@ const LoginComponent = () => {
                         </div>
                         <div className='login_text'>
                             <label className='login_text' htmlFor='password'>Password</label>
-                            <input type='text' id='password' name='password' placeholder='Password' value={password}
+                            <input type='password' id='password' name='password' placeholder='Password' value={password}
                                    onChange={(e) => setPassword(e.target.value)}/>
                         </div>
                         <button type='submit' className='login_button' form='login'>LOGIN</button>

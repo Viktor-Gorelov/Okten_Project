@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.projects.okten_project.entities.UserRole.MANAGER;
+
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
@@ -43,7 +45,7 @@ public class UserService implements UserDetailsService {
         User user = User.builder()
                 .username(signUpRequestDto.getUsername())
                 .password(password)
-                .userRole(userRole)
+                .userRole(MANAGER)
                 .build();
         User savedUser = userRepository.save(user);
 

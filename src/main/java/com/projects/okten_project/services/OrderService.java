@@ -31,8 +31,4 @@ public class OrderService {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("user with this id isn't present"));
     }
-
-    public void deleteOrderById(Long id){
-        orderRepository.deleteById(id);
-    }
 }
