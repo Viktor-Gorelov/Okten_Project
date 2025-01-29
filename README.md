@@ -49,7 +49,7 @@ docker-compose up --build
 3. Open your web browser and access the following URL:
 
 ```
-http://localhost:<PORT>/login
+http://localhost:<PORT>
 ```
 
 Replace `<PORT>` with the port number you specified in the `.env` configuration file.

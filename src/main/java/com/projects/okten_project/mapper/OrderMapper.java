@@ -34,6 +34,10 @@ public class OrderMapper {
                 .sum(order.getSum())
                 .alreadyPaid(order.getAlreadyPaid())
                 .createdAt(create_at)
+                .manager(order.getManager())
+                .groupName(order.getGroupName())
+                .msg(order.getMsg())
+                .utm(order.getUtm())
                 .build();
     }
 
@@ -52,6 +56,10 @@ public class OrderMapper {
         order.setSum(orderDTO.getSum());
         order.setAlreadyPaid(orderDTO.getAlreadyPaid());
         order.setCreatedAt(LocalDateTime.parse(orderDTO.getCreatedAt()));
+        order.setManager(orderDTO.getManager());
+        order.setGroupName(orderDTO.getGroupName());
+        order.setMsg(orderDTO.getMsg());
+        order.setUtm(orderDTO.getUtm());
         return order;
     }
 }

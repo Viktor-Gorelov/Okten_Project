@@ -2,21 +2,21 @@
     text-align: center;
 }
 
-.header{
+.header {
     color: #0a3622;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.login_page{
+.login_page {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-.login_card{
+.login_card {
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -26,7 +26,7 @@
     width: 240px;
     padding: 30px;
 }
-.login_info{
+.login_info {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
@@ -34,13 +34,13 @@
     width: 100%;
 }
 
-.login_text{
+.login_text {
     display: flex;
     flex-direction: column;
     margin-bottom: 10px;
     font-size: 20px;
 }
-.login_text input{
+.login_text input {
     border-radius: 10px;
     height: 45px;
     background-color: #ebebeb;
@@ -48,7 +48,7 @@
     padding-left: 20px;
 }
 
-.login_button{
+.login_button {
     border-radius: 10px;
     color: white;
     height: 45px;
@@ -57,11 +57,11 @@
     border: 1px solid #439f47;
 }
 
-table{
+table {
     width: 100%;
 }
 
-thead{
+thead {
     background-color: #75b752;
     color:white;
 }
@@ -69,23 +69,132 @@ thead{
 tr:nth-of-type(odd) td {
     background-color: #eee;
 }
+tr:nth-of-type(odd) td #comment {
+    background-color: white;
+}
+tr:nth-of-type(odd) td #input_comment {
+    background-color: #eee;
+}
+
 tr:nth-of-type(even) td {
     background-color: white;
 }
+tr:nth-of-type(even) td #comment {
+    background-color: #eee;
+}
+tr:nth-of-type(even) td #input_comment {
+    background-color: white;
+}
 
-.pagination{
+tr.order_row:hover td {
+    background-color: #439f47;
+    color: white;
+}
+
+.order_additional {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    min-height: 160px;
+}
+
+.order_info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.order_all_comments{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 49%;
+}
+
+.order_comments_block{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    width: 82.5%;
+    border-radius: 10px;
+}
+
+tr:nth-of-type(odd) .order_comments_block {
+    background-color: white;
+}
+
+tr:nth-of-type(even) .order_comments_block {
+    background-color: #eee;
+}
+
+.order_comment_block hr{
+    margin: 0;
+}
+
+.com{
+    display: flex;
+    justify-content: space-between;
+    margin-left: 8px;
+    margin-top: 2px;
+    margin-right: 8px;
+}
+
+
+.order_input_comment {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#comment {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    justify-content: space-between;
+}
+
+#comment button {
+    background-color: #bfbfbf;
+    border: 1px solid #eee;
+    width: 15%;
+    margin: 8px;
+}
+
+.order_input_comment .edit_button {
+    background-color: #439f47;
+    border: 1px solid #439f47;
+    width: 15%;
+    height: 60%;
+    margin-left: 20px;
+    margin-right: 20px;
+    border-radius: 10px;
+    color: white;
+}
+
+#input_comment {
+    border-radius: 10px;
+    border: 1px solid #eee;
+    width: 90%;
+    margin: 8px;
+    padding-left: 20px;
+}
+
+.pagination {
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 20px 0;
 }
 
-.pagination .arrow{
+.pagination .arrow {
     width: 46px;
     font-size: 18px;
 }
 
-.pagination button{
+.pagination button {
     border-radius: 18px;
     border: 2px solid #75b752;
     color: white;
@@ -133,5 +242,3 @@ tr:nth-of-type(even) td {
     font-weight: 500;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
-

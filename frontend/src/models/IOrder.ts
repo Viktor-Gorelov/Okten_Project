@@ -1,3 +1,5 @@
+import {IComment} from "./IComment";
+
 export interface IOrder {
     id: number;
     name: string;
@@ -12,4 +14,9 @@ export interface IOrder {
     sum: number;
     alreadyPaid: number;
     createdAt: string;
+    manager: string;
+    groupName: string;
+    msg: string;
+    utm: string;
+    commentList: IComment[];
 }

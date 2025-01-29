@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -20,32 +22,49 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-    @NotBlank(message = "Name cannot be blank")
-    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
+    @Pattern(regexp = "^[A-Za-zА-Яа-я\\s]*$", message = "Name should contain only letters")
     private String name;
-    @NotBlank(message = "Surname cannot be blank")
-    @Size(min = 2, max = 50, message = "Surname must be between 2 and 50 characters")
+
+    @Pattern(regexp = "^[A-Za-zА-Яа-я\\s]*$", message = "Surname should contain only letters")
     private String surname;
-    @NotBlank(message = "Email cannot be blank")
-    @Email(message = "Email should be valid")
+
+    @Email(message = "Invalid email format.")
+    @Size(min = 0)
     private String email;
-    @NotBlank(message = "Phone cannot be blank")
+
+    @Pattern(regexp = "^(^$)|([0-9]{12})", message = "Phone should contain only 12 digits")
     private String phone;
-    @NotNull(message = "Age cannot be null")
-    @Min(value = 1, message = "Age must be at least 1")
+
     @Max(value = 100, message = "Age cannot be more than 100")
+    @Min(value = 0, message = "Age should be positive")
     private Integer age;
-    @NotBlank(message = "Course cannot be blank")
+
+    @Pattern(regexp = "^(FS|QACX|JCX|JSCX|FE|PCX)$", message = "Invalid course")
     private String course;
-    @NotBlank(message = "Course format cannot be blank")
+
+    @Pattern(regexp = "^(static|online)$", message = "Invalid course format")
     private String courseFormat;
-    @NotBlank(message = "Course type cannot be blank")
+
+    @Pattern(regexp = "^(pro|minimal|premium|incubator|vip)$", message = "Invalid course type")
     private String courseType;
+
+    @Pattern(regexp = "^(In Work|New|Aggre|Disaggre|Dubbing)$", message = "Invalid status")
     private String status;
+
     @PositiveOrZero(message = "Sum must be zero or positive")
-    private Double sum;
+    private Integer sum;
+
     @PositiveOrZero(message = "Already paid must be zero or positive")
-    private Double alreadyPaid;
-    @PastOrPresent(message = "Created date must be in the past or present")
+    private Integer alreadyPaid;
     private LocalDateTime createdAt;
+    private String manager;
+
+    @Pattern(regexp = "^[A-Za-zА-Яа-я0-9\\s\\-_.,!@#$%^&*()]*$",
+            message = "Group name must contain only letters, numbers, spaces, and special characters.")
+    private String groupName;
+    private String msg;
+    private String utm;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    private List<Comment> commentsList = new ArrayList<>();
 }
