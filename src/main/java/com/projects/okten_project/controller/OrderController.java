@@ -26,7 +26,7 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
             @RequestParam(defaultValue = "id") String sortField,
-            @RequestParam(defaultValue = "asc") String sortOrder
+            @RequestParam(defaultValue = "desc") String sortOrder
     ) {
         List<String> allowedFields = List.of(
                 "id", "name", "surname", "email", "phone", "age", "course",
