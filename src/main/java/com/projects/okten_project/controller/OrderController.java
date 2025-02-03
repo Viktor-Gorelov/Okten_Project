@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public class OrderController {
             throw new IllegalArgumentException("Invalid sort field: " + sortField);
         }
         Sort sort = Sort.by(Sort.Direction.fromString(sortOrder), sortField);
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
+        PageRequest pageRequest = PageRequest.of(page-1, size, sort);
         return orderService.getOrdersWithPagination(pageRequest);
     }
 
@@ -61,7 +62,8 @@ public class OrderController {
             @PathVariable Long id,
             @RequestBody CommentDTO commentDTO
     ) {
-        OrderDTO updatedOrder = orderService.addCommentToOrder(id, commentDTO.getOwner_id(), commentDTO);
+        String username = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        OrderDTO updatedOrder = orderService.addCommentToOrder(id, username, commentDTO);
         return ResponseEntity.ok(updatedOrder);
     }
 

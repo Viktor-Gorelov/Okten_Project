@@ -10,36 +10,6 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "Registration Admin",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"username\": \"admin@gmail.com\",\r\n    \"password\": \"admin\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://localhost:80/api/auth/signup",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "80",
-							"path": [
-								"api",
-								"auth",
-								"signup"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Authorization Admin",
 					"event": [
 						{
@@ -104,10 +74,7 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const res = pm.response.json();\r",
-									"\r",
-									"pm.environment.set(\"accessToken\", res.accessToken);\r",
-									"pm.environment.set(\"refreshToken\", res.refreshToken);"
+									""
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -274,7 +241,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:80/api/orders?page=0&size=25&sortField=createdAt&sortOrder=desc",
+							"raw": "http://localhost:80/api/orders?page=1&size=25&sortField=createdAt&sortOrder=desc",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -287,7 +254,7 @@
 							"query": [
 								{
 									"key": "page",
-									"value": "0"
+									"value": "1"
 								},
 								{
 									"key": "size",
@@ -381,7 +348,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"text\": \"Test comment\",\r\n    \"manager\": \"admin@gmail.com\",\r\n    \"ownerId\": 1\r\n}",
+							"raw": "{\r\n    \"text\": \"Test comment\",\r\n    \"manager\": \"admin@gmail.com\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"

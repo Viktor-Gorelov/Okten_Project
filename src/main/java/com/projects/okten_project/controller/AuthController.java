@@ -5,6 +5,7 @@ import com.projects.okten_project.dto.auth.AuthResponseDTO;
 import com.projects.okten_project.dto.auth.SignUpRequestDTO;
 import com.projects.okten_project.dto.auth.SignUpResponseDTO;
 import com.projects.okten_project.entities.UserRole;
+import com.projects.okten_project.services.RefreshTokenService;
 import com.projects.okten_project.services.UserService;
 import com.projects.okten_project.util.JwtUtil;
 import jakarta.validation.Valid;
@@ -31,17 +32,19 @@ public class AuthController {
 
     private final UserService userService;
 
+    private final RefreshTokenService refreshTokenService;
+
     private final JwtUtil jwtUtil;
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponseDTO> refreshAccessToken(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");
 
-        String username = jwtUtil.extractUsername(refreshToken);
+        String username = refreshTokenService.verifyRefreshToken(refreshToken);
         UserDetails userDetails = userService.loadUserByUsername(username);
 
         String newAccessToken = jwtUtil.generateAccessToken(userDetails);
-        String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
+        String newRefreshToken = refreshTokenService.createRefreshToken(username);
 
         return ResponseEntity.ok(
                 AuthResponseDTO.builder()
@@ -64,7 +67,7 @@ public class AuthController {
         if (authentication.isAuthenticated()) {
             UserDetails user = userService.loadUserByUsername(authRequestDto.getUsername());
             String accessToken = jwtUtil.generateAccessToken(user);
-            String refreshToken = jwtUtil.generateRefreshToken(user);
+            String refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
             return ResponseEntity.ok(
                     AuthResponseDTO.builder()
                             .accessToken(accessToken)

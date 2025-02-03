@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -60,6 +61,7 @@ public class JwtUtil {
         return generateToken(user.getUsername(), accessTokenTtlMillis, Map.of("roles", roles));
     }
 
+    @Transactional
     public String generateRefreshToken(UserDetails user) {
         return generateToken(user.getUsername(), refreshTokenTtlMillis, Collections.emptyMap());
     }

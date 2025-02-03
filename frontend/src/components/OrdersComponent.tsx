@@ -34,7 +34,6 @@ const OrdersComponent: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [currentUser, setCurrentUser] = useState<string>('');
     const [comment, setComment] = useState<string>('');
-    const [currentOwnerId, setCurrentOwnerId] = useState<number | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [modalInfoIsOpen, setModalInfoOpen] = useState(false);
@@ -42,7 +41,7 @@ const OrdersComponent: React.FC = () => {
     const [group, setGroup] = useState<string>('');
     const [groups, setGroups] = useState<string[]>([]);
 
-    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+    const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const navigate = useNavigate();
@@ -90,7 +89,7 @@ const OrdersComponent: React.FC = () => {
         const fetchOrders = async () => {
             try {
                 const response = await fetch(
-                    `/api/orders?page=${currentPage - 1}&size=25&sortField=${sortField}&sortOrder=${sortOrder}`,
+                    `/api/orders?page=${currentPage}&size=25&sortField=${sortField}&sortOrder=${sortOrder}`,
                     {
                         method: 'GET',
                         headers: {
@@ -130,10 +129,6 @@ const OrdersComponent: React.FC = () => {
 
             const data = await response.json();
             setComments(data);
-
-            if (data.length > 0) {
-                setCurrentOwnerId(data[0].owner_id);
-            }
 
         } catch (error) {
             console.error('Error fetching comments:', error);
@@ -195,8 +190,7 @@ const OrdersComponent: React.FC = () => {
                 },
                 body: JSON.stringify({
                     text: comment,
-                    manager: currentUser,
-                    owner_id: currentOwnerId,
+                    manager: currentUser
                 }),
             });
 

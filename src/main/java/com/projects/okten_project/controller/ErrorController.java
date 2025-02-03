@@ -26,6 +26,15 @@ public class ErrorController {
                         .timestamp(LocalDateTime.now())
                         .build());
     }
+    @ExceptionHandler({IllegalStateException.class})
+    public ResponseEntity<ErrorDTO> handleTokenExceptions(RuntimeException e){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorDTO.builder()
+                        .details(e.getMessage())
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
