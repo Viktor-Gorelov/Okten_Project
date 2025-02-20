@@ -1,0 +1,48 @@
+.activate_page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.activate_card {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 10px;
+    margin-top: 300px;
+    width: 240px;
+    padding: 30px;
+}
+
+.activate_info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: stretch;
+    width: 100%;
+}
+
+.activate_text {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+.activate_text input {
+    border-radius: 10px;
+    height: 45px;
+    background-color: #ebebeb;
+    border: 1px solid #ebebeb;
+    padding-left: 20px;
+}
+
+.activate_button {
+    border-radius: 10px;
+    color: white;
+    height: 45px;
+    width: 100%;
+    background-color: #439f47;
+    border: 1px solid #439f47;
+}

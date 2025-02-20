@@ -9,9 +9,9 @@ import lombok.Data;
 @Builder
 public class AuthRequestDTO {
 
-    @NotBlank(message = "Username cannot be blank")
-    @Size(min = 2, max = 50, message = "Username must be between 2 and 50 characters")
-    private String username;
+    @NotBlank(message = "Email cannot be blank")
+    @Size(min = 2, max = 50, message = "Email must be between 2 and 50 characters")
+    private String email;
 
     @NotBlank(message = "Password cannot be blank")
     @Size(min = 2, max = 50, message = "Password must be between 2 and 50 characters")

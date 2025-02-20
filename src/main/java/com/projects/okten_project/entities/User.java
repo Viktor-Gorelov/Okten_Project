@@ -28,19 +28,24 @@ public class User implements UserDetails {
     private Long id;
     private String userRole;
     private String email;
-    private String username;
+    private String name;
+    private String surname;
     private String password;
+    private Boolean isActive;
+    private Boolean isBanned;
+    private OffsetDateTime lastLogin;
+
     @CreatedDate
     private OffsetDateTime registeredAt;
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities(){
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return Set.of(new SimpleGrantedAuthority(userRole));
     }
 
     @Override
     public String getUsername(){
-        return username;
+        return email;
     }
 
     @Override

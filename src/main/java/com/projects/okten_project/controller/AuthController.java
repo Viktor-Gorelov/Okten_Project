@@ -4,10 +4,13 @@ import com.projects.okten_project.dto.auth.AuthRequestDTO;
 import com.projects.okten_project.dto.auth.AuthResponseDTO;
 import com.projects.okten_project.dto.auth.SignUpRequestDTO;
 import com.projects.okten_project.dto.auth.SignUpResponseDTO;
+import com.projects.okten_project.dto.user.UserDTO;
+import com.projects.okten_project.entities.User;
 import com.projects.okten_project.entities.UserRole;
 import com.projects.okten_project.services.RefreshTokenService;
 import com.projects.okten_project.services.UserService;
 import com.projects.okten_project.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,12 +19,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,11 +43,11 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> refreshAccessToken(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");
 
-        String username = refreshTokenService.verifyRefreshToken(refreshToken);
-        UserDetails userDetails = userService.loadUserByUsername(username);
+        String email = refreshTokenService.verifyRefreshToken(refreshToken);
+        User userDetails = userService.loadUserByEmail(email);
 
         String newAccessToken = jwtUtil.generateAccessToken(userDetails);
-        String newRefreshToken = refreshTokenService.createRefreshToken(username);
+        String newRefreshToken = refreshTokenService.createRefreshToken(email);
 
         return ResponseEntity.ok(
                 AuthResponseDTO.builder()
@@ -61,11 +64,19 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<AuthResponseDTO> signIn(@RequestBody @Valid AuthRequestDTO authRequestDto) {
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authRequestDto.getUsername(), authRequestDto.getPassword());
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(authRequestDto.getEmail(), authRequestDto.getPassword());
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        UserDTO userDTO = userService.loadUserDTOByEmail(authRequestDto.getEmail());
+
 
         if (authentication.isAuthenticated()) {
-            UserDetails user = userService.loadUserByUsername(authRequestDto.getUsername());
+            User user = userService.loadUserByEmail(authRequestDto.getEmail());
+
+            if (Boolean.TRUE.equals(user.getIsBanned())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            userDTO.setLastLogin(String.valueOf(OffsetDateTime.now()));
             String accessToken = jwtUtil.generateAccessToken(user);
             String refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
             return ResponseEntity.ok(
@@ -77,5 +88,44 @@ public class AuthController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    @PostMapping("/activate/{id}")
+    public ResponseEntity<?> generateActivationLink(@PathVariable Long id) {
+        User user = userService.findUser(id);
+
+        if (user.getIsActive()) {
+            return ResponseEntity.badRequest().body("User is already active");
+        }
+
+        String activationToken = jwtUtil.generateActivationToken(user);
+        String activationLink = "http://localhost/activate/" + activationToken;
+
+        return ResponseEntity.ok(Map.of("activationLink", activationLink));
+    }
+
+    @PostMapping("/activate")
+    public ResponseEntity<?> activateManager(@RequestBody Map<String, String> requestBody) {
+        String token = requestBody.get("token");
+        String confirmPassword = requestBody.get("confirmPassword");
+
+        if (token == null || confirmPassword == null) {
+            return ResponseEntity.badRequest().body("Token and password must be provided");
+        }
+
+        Claims claims = jwtUtil.extractAllClaims(token);
+
+        if (!"activate".equals(claims.get("token_type"))) {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
+
+        Long userId = claims.get("user_id", Long.class);
+        User user = userService.findUser(userId);
+
+        user.setIsActive(true);
+        user.setPassword(userService.encodePassword(confirmPassword));
+        userService.saveUser(user);
+
+        return ResponseEntity.ok("User activated successfully");
     }
 }

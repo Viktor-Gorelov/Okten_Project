@@ -11,29 +11,31 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class ErrorController {
 
-    @ExceptionHandler({MalformedJwtException.class, ExpiredJwtException.class})
-    public ResponseEntity<ErrorDTO> handleExceptions(RuntimeException e){
+    @ExceptionHandler({
+            MalformedJwtException.class,
+            ExpiredJwtException.class,
+            IllegalStateException.class,
+            DateTimeParseException.class,
+            RuntimeException.class
+    })
+    public ResponseEntity<ErrorDTO> handleExceptions(RuntimeException e) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ErrorDTO.builder()
-                        .details(e.getMessage())
-                        .timestamp(LocalDateTime.now())
-                        .build());
+                .body(buildErrorResponse(e));
     }
-    @ExceptionHandler({IllegalStateException.class})
-    public ResponseEntity<ErrorDTO> handleTokenExceptions(RuntimeException e){
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ErrorDTO.builder()
-                        .details(e.getMessage())
-                        .timestamp(LocalDateTime.now())
-                        .build());
+
+    private ErrorDTO buildErrorResponse(Exception e) {
+        return ErrorDTO.builder()
+                .details(e.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

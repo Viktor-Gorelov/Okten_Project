@@ -1,0 +1,116 @@
+.modal_content{
+    padding: 20px;
+    border-radius: 10px;
+    background-color: white;
+    width: 18vw;
+    transition: 0.4s all;
+}
+
+.admin_panel{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    background-color: white;
+}
+
+.statistics{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 14px;
+}
+.stats{
+    display: flex;
+    flex-direction: row;
+}
+
+p{
+    margin: 0 3px;
+}
+
+.create_button button{
+    background-color: #439f47;
+    border: 1px solid #439f47;
+    border-radius: 6px;
+    color: #fff;
+    height: 4vh;
+    margin-left: 10%;
+    margin-bottom: 1%;
+}
+
+#create_manager input{
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin: 8px 8px 2px 8px;
+    padding-left: 20px;
+    height: 6vh;
+    background-color: #eee;
+}
+
+.block{
+    display: flex;
+    flex-direction: column;
+    height: 10vh;
+    padding-bottom: 10px;
+}
+
+.modal_button{
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.modal_button button{
+    border-radius: 8px;
+    color: white;
+    height: 45px;
+    background-color: #439f47;
+    border: 1px solid #439f47;
+    width: 28%;
+    margin: 6px;
+}
+
+.managers_blocks{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding-bottom: 2.8vh;
+}
+
+.manager_block{
+    display: flex;
+    flex-direction: row;
+    border: 2px solid #92ba7a;
+    border-radius: 8px;
+    width: 80%;
+    margin: 8px;
+}
+
+.manager_info{
+    display: flex;
+    flex-direction: column;
+    margin: 16px 22px;
+    width: 15%;
+}
+
+.manager_stats{
+    display: flex;
+    flex-direction: column;
+    margin: 16px 22px;
+    width: 15%;
+}
+
+.manager_buttons{
+    display: flex;
+    width: 28%;
+    margin: 16px 5vw;
+}
+
+.manager_buttons button{
+    border-radius: 8px;
+    color: white;
+    height: 45px;
+    background-color: #439f47;
+    border: 1px solid #439f47;
+    margin: 6px;
+}

@@ -51,7 +51,7 @@ const LoginComponent = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username: email, password: password }),
+                body: JSON.stringify({ email: email, password: password }),
             });
 
             if (!response.ok) {
@@ -59,13 +59,11 @@ const LoginComponent = () => {
             }
 
             const data = await response.json();
-            console.log('Tokens:', data);
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);
             navigate("/orders");
         } catch (err) {
-            console.error(err);
-            setError('Login failed! Check your credentials.');
+            setError('Login failed! User is banned.');
         }
     };
 
@@ -75,18 +73,18 @@ const LoginComponent = () => {
                 <div className='login_info'>
                     <form id='login' onSubmit={handleLogin}>
                         <div className='login_text'>
-                            <label className='login_text' htmlFor='email'>Email</label>
+                            <label htmlFor='email'>Email</label>
                             <input type='text' id='email' name='email' placeholder='Email' value={email}
                                    onChange={(e) => setEmail(e.target.value)}/>
                         </div>
                         <div className='login_text'>
-                            <label className='login_text' htmlFor='password'>Password</label>
+                            <label htmlFor='password'>Password</label>
                             <input type='password' id='password' name='password' placeholder='Password' value={password}
                                    onChange={(e) => setPassword(e.target.value)}/>
                         </div>
                         <button type='submit' className='login_button' form='login'>LOGIN</button>
                     </form>
-                    {error && <p className='error_message'>{error}</p>}
+                    {error && <p>{error}</p>}
                 </div>
             </div>
         </div>

@@ -12,13 +12,13 @@ import com.projects.okten_project.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +28,19 @@ public class OrderService {
     private final UserRepository userRepository;
     private final OrderMapper orderMapper;
 
-    public Page<OrderDTO> getOrdersWithPagination(Pageable pageable) {
-        return orderRepository.findAll(pageable).map(orderMapper::mapToDTO);
+    public Page<OrderDTO> getOrdersWithFilters(
+            int page, int size, String sortField, String sortOrder,
+            String name, String surname, String email, String phone, Integer age,
+            String course, String courseFormat, String courseType, String status, String group,
+            LocalDateTime startDate, LocalDateTime endDate, String currentUser) {
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortOrder), sortField);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
+
+        return orderRepository.findOrdersWithFilters(
+                name, surname, email, phone, age, course, courseFormat, courseType,
+                status, group, startDate, endDate, currentUser, pageRequest
+        ).map(orderMapper::mapToDTO);
     }
 
     public OrderDTO getOrderById(Long id){
@@ -60,11 +71,28 @@ public class OrderService {
         return orderRepository.findAllUniqueGroups();
     }
 
+    public Map<String, Map<String, Number>> getManagersStatistics() {
+        List<Object[]> stats = orderRepository.getManagerStatistics();
+        Map<String, Map<String, Number>> result = new LinkedHashMap<>();
+
+        for (Object[] stat : stats) {
+            Map<String, Number> managerStat = new HashMap<>();
+            managerStat.put("total", ((Number) stat[1]).intValue());
+            managerStat.put("new", ((Number) stat[2]).intValue());
+            managerStat.put("inWork", ((Number) stat[3]).intValue());
+            managerStat.put("agree", ((Number) stat[4]).intValue());
+            managerStat.put("disagree", ((Number) stat[5]).intValue());
+            managerStat.put("dubbing", ((Number) stat[6]).intValue());
+            result.put((String)stat[0], managerStat);
+        }
+        return result;
+    }
+
     @Transactional
     public OrderDTO addCommentToOrder(Long order_id, String owner_name, CommentDTO commentDTO) {
         Order order = orderRepository.findById(order_id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + order_id));
-        User user = userRepository.findByUsername(owner_name);
+        User user = userRepository.findByName(owner_name);
 
         if (order.getManager() != null && !order.getManager().equals(commentDTO.getManager())) {
             throw new IllegalStateException("This order is already managed by another user.");
@@ -108,5 +136,18 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
         return orderMapper.mapToDTO(savedOrder);
+    }
+
+    public Map<String, Long> getOrdersStatistics() {
+        Map<String, Long> statistics = new HashMap<>();
+
+        statistics.put("total", orderRepository.count());
+        statistics.put("agree", orderRepository.countByStatus("Agree"));
+        statistics.put("in_work", orderRepository.countByStatus("In Work"));
+        statistics.put("disagree", orderRepository.countByStatus("Disagree"));
+        statistics.put("dubbing", orderRepository.countByStatus("Dubbing"));
+        statistics.put("new", orderRepository.countByStatus("New"));
+
+        return statistics;
     }
 }

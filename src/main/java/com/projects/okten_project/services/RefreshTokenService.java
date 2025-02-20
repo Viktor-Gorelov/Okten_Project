@@ -16,13 +16,13 @@ public class RefreshTokenService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
     @Transactional
-    public String createRefreshToken(String username) {
-        refreshTokenRepository.deleteByUsername(username);
-        String token = jwtUtil.generateRefreshToken(userService.loadUserByUsername(username));
+    public String createRefreshToken(String email) {
+        refreshTokenRepository.deleteByUsername(email);
+        String token = jwtUtil.generateRefreshToken(userService.loadUserByEmail(email));
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(token)
-                .username(username)
+                .username(email)
                 .expiryDate(Instant.now().plusSeconds(60 * 60 * 24 * 7))
                 .build();
         refreshTokenRepository.save(refreshToken);

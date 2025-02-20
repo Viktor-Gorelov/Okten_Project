@@ -11,15 +11,6 @@
     transition: 0.5s;
 }
 
-
-.modal_content{
-    padding: 20px;
-    border-radius: 10px;
-    background-color: white;
-    width: 50vw;
-    transition: 0.4s all;
-}
-
 .modal_content label{
     padding-left: 8px;
 }
@@ -99,11 +90,11 @@
     padding-bottom: 10px;
 }
 
-.modal_button{
+.modal_edit_buttons{
     display: flex;
     justify-content: flex-end;
 }
-.modal_button button{
+.modal_edit_buttons button{
     border-radius: 8px;
     color: white;
     height: 45px;

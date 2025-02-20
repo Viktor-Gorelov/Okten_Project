@@ -4,6 +4,8 @@ import {useNavigate, useSearchParams} from "react-router-dom";
 import {jwtDecode, JwtPayload} from "jwt-decode";
 import {IComment} from "../models/IComment";
 import {ModalComponent} from "./ModalComponent";
+import * as XLSX from "xlsx";
+import HeaderComponent from "./HeaderComponent";
 
 const OrdersComponent: React.FC = () => {
     const [orders, setOrders] = useState<IOrder[]>([]);
@@ -41,6 +43,23 @@ const OrdersComponent: React.FC = () => {
     const [group, setGroup] = useState<string>('');
     const [groups, setGroups] = useState<string[]>([]);
 
+    const [filters, setFilters] = useState({
+        name: searchParams.get("name") || "",
+        surname: searchParams.get("surname") || "",
+        email: searchParams.get("email") || "",
+        phone: searchParams.get("phone") || "",
+        age: searchParams.get("age") || "",
+        course: searchParams.get("course") || "all",
+        courseFormat: searchParams.get("courseFormat") || "all",
+        courseType: searchParams.get("courseType") || "all",
+        status: searchParams.get("status") || "all",
+        group: searchParams.get("group") || "all",
+        startDate: searchParams.get("startDate") || "",
+        endDate: searchParams.get("endDate") || "",
+        onlyMy: searchParams.get("onlyMy") || "false",
+    });
+    const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+
     const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
@@ -58,9 +77,25 @@ const OrdersComponent: React.FC = () => {
             return;
         }
 
-        const fetchUser = () => {
-            const decoded = jwtDecode<JwtPayload>(token!);
-            setCurrentUser(decoded.sub || '');
+        const fetchUser = async () => {
+            try {
+                const decoded = jwtDecode<JwtPayload &{ user_id: string}>(token!);
+                const response = await fetch(
+                    `/api/managers/${decoded.user_id}/name`,
+                        {
+                            method: 'GET',
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                );
+                const data = await response.text();
+                setCurrentUser(data)
+            }
+            catch (error){
+                console.error(error);
+                setError('Failed to fetch user. Please try again.');
+            }
         };
 
         const fetchGroups = async () => {
@@ -88,19 +123,31 @@ const OrdersComponent: React.FC = () => {
 
         const fetchOrders = async () => {
             try {
-                const response = await fetch(
-                    `/api/orders?page=${currentPage}&size=25&sortField=${sortField}&sortOrder=${sortOrder}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+                const params = new URLSearchParams();
+
+                params.append("page", currentPage.toString());
+                params.append("size", "25");
+                params.append("sortField", sortField);
+                params.append("sortOrder", sortOrder);
+
+                const optionalParams = ["name", "surname", "email", "phone", "age", "course",
+                    "courseFormat", "courseType", "status", "group", "startDate", "endDate", "onlyMy"];
+                optionalParams.forEach(param => {
+                    const value = searchParams.get(param);
+                    if (value && value !== "all") params.append(param, value);
+                });
+
+                const response = await fetch(`/api/orders?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
                 if (!response.ok) throw new Error('Failed to fetch orders');
                 const data = await response.json();
+
                 setOrders(data.content);
                 setTotalPages(data.totalPages);
             } catch (error) {
@@ -112,7 +159,163 @@ const OrdersComponent: React.FC = () => {
         fetchUser();
         fetchGroups();
         fetchOrders();
-    }, [currentPage, sortField, sortOrder]);
+    }, [currentPage, sortField, sortOrder, searchParams]);
+
+    const resetFilters = () => {
+        setFilters({
+            name: "",
+            surname: "",
+            email: "",
+            phone: "",
+            age: "",
+            course: "all",
+            courseFormat: "all",
+            courseType: "all",
+            status: "all",
+            group: "all",
+            startDate: "",
+            endDate: "",
+            onlyMy: "false",
+        });
+        setSearchParams({});
+    };
+
+    const exportAllOrdersToExcel = async () => {
+        try {
+            const params = new URLSearchParams(searchParams);
+            console.log(params)
+
+            const firstResponse = await fetch(`/api/orders?${params.toString()}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                },
+            });
+
+            if (!firstResponse.ok) throw new Error("Failed to fetch orders");
+            const firstData = await firstResponse.json();
+            const totalPages = firstData.totalPages;
+
+            const pageRequests = [];
+            params.delete("page");
+            for (let page = 1; page <= totalPages; page++) {
+                pageRequests.push(
+                    fetch(`/api/orders?page=${page}&${params.toString()}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                        },
+                    }).then((res) => res.json())
+                );
+            }
+
+            const allPages = await Promise.all(pageRequests);
+
+            const allOrders = allPages.flatMap((page) => page.content);
+
+            const exportData = allOrders.map((order) => ({
+                ID: order.id,
+                Name: order.name,
+                Surname: order.surname,
+                Email: order.email,
+                Phone: order.phone,
+                Age: order.age,
+                Course: order.course,
+                "Course Format": order.courseFormat,
+                "Course Type": order.courseType,
+                Status: order.status,
+                Sum: order.sum,
+                "Already Paid": order.alreadyPaid,
+                Group: order.groupName,
+                "Created At": order.createdAt,
+                Manager: order.manager,
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+            XLSX.writeFile(workbook, "all_filtered_orders.xlsx");
+        } catch (error) {
+            console.error("Error exporting orders:", error);
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        const dateRegex = /^(January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}$/;
+
+        setFilters((prev) => ({ ...prev, [name]: value }));
+
+        if (typingTimeout) clearTimeout(typingTimeout);
+
+        const isDateField = name === "startDate" || name === "endDate";
+
+        if (isDateField) {
+            const updatedFilters = { ...filters, [name]: value };
+
+            if (!updatedFilters.startDate || !updatedFilters.endDate) {
+                return;
+            }
+
+            const timeout = setTimeout(() => {
+                if (!dateRegex.test(updatedFilters.startDate) || !dateRegex.test(updatedFilters.endDate)) {
+                    alert("Date must be in format: 'MMMM d, yyyy' (e.g., 'January 5, 2024').");
+                    return;
+                }
+
+                setSearchParams((prevParams) => {
+                    const newParams = new URLSearchParams(prevParams);
+                    newParams.set("startDate", updatedFilters.startDate);
+                    newParams.set("endDate", updatedFilters.endDate);
+                    newParams.set("page", currentPage.toString());
+                    newParams.set("sortField", sortField);
+                    newParams.set("sortOrder", sortOrder);
+                    return newParams;
+                });
+            }, 1000);
+
+            setTypingTimeout(timeout);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            setSearchParams((prevParams) => {
+                const newParams = new URLSearchParams(prevParams);
+                if (value) {
+                    newParams.set(name, value);
+                } else {
+                    newParams.delete(name);
+                }
+                newParams.set("page", currentPage.toString());
+                newParams.set("sortField", sortField);
+                newParams.set("sortOrder", sortOrder);
+                return newParams;
+            });
+        }, 500);
+
+        setTypingTimeout(timeout);
+    };
+
+    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const isChecked = e.target.checked;
+
+        setFilters((prev) => ({ ...prev, onlyMy: `${isChecked}` }));
+        setSearchParams((prevParams) => {
+            const newParams = new URLSearchParams(prevParams);
+
+            if (isChecked) {
+                newParams.set("onlyMy", "true");
+            } else {
+                newParams.delete("onlyMy");
+            }
+
+            newParams.set("page", "1");
+            return newParams;
+        });
+    }
 
     const fetchCommentsForOrder = async (orderId: number) => {
         try {
@@ -137,7 +340,11 @@ const OrdersComponent: React.FC = () => {
     };
 
     const handlePageChange = (newPage: number) => {
-        setSearchParams({ page: (newPage).toString(), sortField, sortOrder });
+        setSearchParams((prevParams) => {
+            const newParams = new URLSearchParams(prevParams);
+            newParams.set("page", newPage.toString());
+            return newParams;
+        });
     };
 
     const toggleExpandOrder = async (orderId: number) => {
@@ -160,7 +367,13 @@ const OrdersComponent: React.FC = () => {
         const sortFieldToSend = fieldMap[field] || field;
         const newSortOrder = sortField === sortFieldToSend && sortOrder === 'asc' ? 'desc' : 'asc';
 
-        setSearchParams({ page: "1", sortField: sortFieldToSend, sortOrder: newSortOrder });
+        setSearchParams((prevParams) => {
+            const newParams = new URLSearchParams(prevParams);
+            newParams.set("sortField", sortFieldToSend);
+            newParams.set("sortOrder", newSortOrder);
+            newParams.set("page", "1");
+            return newParams;
+        });
     };
 
     const handleCommentSubmit = async (event: React.FormEvent, orderId: number) => {
@@ -356,22 +569,22 @@ const OrdersComponent: React.FC = () => {
         const halfVisible = Math.floor(maxVisiblePages / 2);
 
         if (totalPages <= maxVisiblePages) {
-            for (let i = 1; i < totalPages; i++) {
+            for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
             }
         } else if (currentPage <= halfVisible) {
-            for (let i = 1; i < maxVisiblePages - 1; i++) {
+            for (let i = 1; i < maxVisiblePages - 2; i++) {
                 pages.push(i);
             }
             pages.push('...', totalPages);
-        } else if (currentPage >= totalPages - halfVisible - 1) {
+        } else if (currentPage >= totalPages - halfVisible) {
             pages.push(1, '...');
-            for (let i = totalPages - maxVisiblePages + 1; i < totalPages + 1; i++) {
+            for (let i = totalPages - (maxVisiblePages - 3); i <= totalPages; i++) {
                 pages.push(i);
             }
         } else {
             pages.push(1, '...');
-            for (let i = currentPage - halfVisible + 1; i <= currentPage + halfVisible - 1; i++) {
+            for (let i = currentPage - halfVisible + 2; i <= currentPage + halfVisible - 2; i++) {
                 pages.push(i);
             }
             pages.push('...', totalPages);
@@ -381,6 +594,91 @@ const OrdersComponent: React.FC = () => {
 
     return (
         <div>
+            <div className="filter_all">
+                <div className="filter_blocks">
+                    <div className="filter_first_row">
+                        <div className="filter_block">
+                            <input type="text" name="name" placeholder="Name" value={filters.name || ''}
+                                   onChange={handleChange}/>
+                        </div>
+                        <div className="filter_block">
+                            <input type="text" name="surname" placeholder="Surname" value={filters.surname || ''}
+                                   onChange={handleChange}/>
+                        </div>
+                        <div className="filter_block">
+                            <input type="email" name="email" placeholder="Email" value={filters.email || ''}
+                                   onChange={handleChange}/>
+                        </div>
+                        <div className="filter_block">
+                            <input type="tel" name="phone" placeholder="Phone" value={filters.phone || ''}
+                                   onChange={handleChange}/>
+                        </div>
+                        <div className="filter_block">
+                            <input type="number" name="age" placeholder="Age" value={filters.age || ''}
+                                   onChange={handleChange}/>
+                        </div>
+                        <div className="filter_block">
+                            <select name="course" value={filters.course || 'all'} onChange={handleChange}>
+                                <option value="all">All courses</option>
+                                {['FS', 'QACX', 'JCX', 'JSCX', 'FE', 'PCX'].map((course) => (
+                                    <option key={course} value={course}>{course}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="filter_second_row">
+                        <div className="filter_block">
+                            <select name="courseFormat" value={filters.courseFormat || 'all'} onChange={handleChange}>
+                                <option value="all">All formats</option>
+                                {['static', 'online'].map((format) => (
+                                    <option key={format} value={format}>{format}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="filter_block">
+                            <select name="courseType" value={filters.courseType || 'all'} onChange={handleChange}>
+                                <option value="all">All types</option>
+                                {['pro', 'minimal', 'premium', 'incubator', 'vip'].map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="filter_block">
+                            <select name="status" value={filters.status || 'all'} onChange={handleChange}>
+                                <option value="all">All statuses</option>
+                                {['In Work', 'New', 'Aggre', 'Disaggre', 'Dubbing'].map((status) => (
+                                    <option key={status} value={status}>{status}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="filter_block">
+                            <select name="group" value={filters.group || 'all'} onChange={handleChange}>
+                                <option value="all">All groups</option>
+                                {groups.map((group) => (
+                                    <option key={group} value={group}>{group}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="filter_block">
+                            <input type="text" name="startDate" placeholder="Start date (e.g., January 5, 2024)"
+                                   value={filters.startDate || ''} onChange={handleChange}/>
+                        </div>
+                        <div className="filter_block">
+                            <input type="text" name="endDate" placeholder="End date (e.g., January 10, 2024)"
+                                   value={filters.endDate || ''} onChange={handleChange}/>
+                        </div>
+                    </div>
+                </div>
+                <div className="filter_checkbox">
+                    <input id="my" type="checkbox" checked={filters.onlyMy === "true"} onChange={handleCheckboxChange}></input>
+                    <label htmlFor="my">My</label>
+                </div>
+                <div className="section_buttons">
+                    <button className="reset_button" onClick={() => (resetFilters())}></button>
+                    <button className="excel_button" onClick={() => (exportAllOrdersToExcel())}></button>
+                </div>
+            </div>
             <table>
                 <thead>
                 <tr>
@@ -405,7 +703,7 @@ const OrdersComponent: React.FC = () => {
                             key={field}
                             scope="col"
                             onClick={() => handleSort(field)}
-                            style={{ cursor: 'pointer' }}
+                            style={{cursor: 'pointer'}}
                         >
                             {field}{' '}
                             {sortField === field && (sortOrder === 'asc')}
@@ -450,7 +748,7 @@ const OrdersComponent: React.FC = () => {
                                                                 <div>{comment.text}</div>
                                                                 <div>{currentUser} {comment.created_at}</div>
                                                             </div>
-                                                            {index !== comments.length - 1 && <hr />}
+                                                            {index !== comments.length - 1 && <hr/>}
                                                         </div>
                                                     ))
                                                 ) : (
@@ -480,191 +778,198 @@ const OrdersComponent: React.FC = () => {
             </table>
             <section>
                 <ModalComponent isOpen={modalInfoIsOpen} onClose={() =>setModalInfoOpen(false)}>
-                    <form id="modal_rows" onSubmit={updateOrder}>
-                        <div className="first_row">
-                            <div className="first_block">
-                                <label>
-                                    Group
-                                </label>
-                                <div>
-                                    {modalMode === "enable_group" ? (
-                                        <div className="block">
-                                            <select value={editableOrder?.groupName || ""}
-                                                    onChange={(e) =>
-                                                setEditableOrder({...editableOrder, groupName: e.target.value})}>
-                                                {groups.map((group) => (
-                                                    <option key={group} value={group}
-                                                            selected={group === editableOrder?.groupName}>
-                                                        {group}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <button className="first_button" type="button" onClick={() =>
-                                                setModalMode("add_group")}>ADD GROUP</button>
-                                        </div>
-                                    ) : (
-                                        <div className="block">
-                                            <input
-                                                type="text"
-                                                id = "group"
-                                                onChange={(e) =>
-                                                    setGroup(e.target.value)}
-                                                placeholder="Group"
-                                            />
-                                            <div className="group_button">
-                                                <button type="button" onClick={() =>
-                                                    groups.push(group)}>
-                                                    ADD
-                                                </button>
-                                                <button type="button" onClick={async () => {
-                                                    setModalMode("enable_group")
-                                                }}>
-                                                    SELECT
+                    <div className="modal_contents">
+                        <form id="modal_rows" onSubmit={updateOrder}>
+                            <div className="first_row">
+                                <div className="first_block">
+                                    <label>
+                                        Group
+                                    </label>
+                                    <div>
+                                        {modalMode === "enable_group" ? (
+                                            <div className="block">
+                                                <select value={editableOrder?.groupName || ""}
+                                                        onChange={(e) =>
+                                                            setEditableOrder({
+                                                                ...editableOrder,
+                                                                groupName: e.target.value
+                                                            })}>
+                                                    {groups.map((group) => (
+                                                        <option key={group} value={group}
+                                                                selected={group === editableOrder?.groupName}>
+                                                            {group}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button className="first_button" type="button" onClick={() =>
+                                                    setModalMode("add_group")}>ADD GROUP
                                                 </button>
                                             </div>
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <div className="block">
+                                                <input
+                                                    type="text"
+                                                    id="group"
+                                                    onChange={(e) =>
+                                                        setGroup(e.target.value)}
+                                                    placeholder="Group"
+                                                />
+                                                <div className="group_button">
+                                                    <button type="button" onClick={() =>
+                                                        groups.push(group)}>
+                                                        ADD
+                                                    </button>
+                                                    <button type="button" onClick={async () => {
+                                                        setModalMode("enable_group")
+                                                    }}>
+                                                        SELECT
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="first_block">
+                                    <label>
+                                        Status
+                                    </label>
+                                    <select id="second_select" value={editableOrder?.status || ""}
+                                            onChange={(e) =>
+                                                setEditableOrder({...editableOrder, status: e.target.value})}
+                                    >
+                                        {['In Work', 'New', 'Agree', 'Disagree', 'Dubbing'].map((status) => (
+                                            <option key={status} value={status}>
+                                                {status}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
-                            <div className="first_block">
-                            <label>
-                                    Status
-                                </label>
-                                <select id="second_select" value={editableOrder?.status || ""}
-                                        onChange={(e) =>
-                                            setEditableOrder({...editableOrder, status: e.target.value})}
-                                >
-                                    {['In Work', 'New', 'Aggre', 'Disaggre', 'Dubbing'].map((status) => (
-                                        <option key={status} value={status}>
-                                            {status}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="modal_row">
+                                <div className="modal_block">
+                                    <label>
+                                        Name
+                                    </label>
+                                    <input type="text" placeholder="Name" value={editableOrder?.name || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="modal_block">
+                                    <label>
+                                        Sum
+                                    </label>
+                                    <input type="number" placeholder="Sum" value={editableOrder?.sum || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, sum: +e.target.value})}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="modal_row">
-                            <div className = "modal_block">
-                            <label>
-                                Name
-                            </label>
-                                <input type="text" placeholder="Name" value={editableOrder?.name || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, name: e.target.value})}
-                                />
+                            <div className="modal_row">
+                                <div className="modal_block">
+                                    <label>
+                                        Surname
+                                    </label>
+                                    <input type="text" placeholder="Surname" value={editableOrder?.surname || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, surname: e.target.value})}
+                                    />
+                                </div>
+                                <div className="modal_block">
+                                    <label>
+                                        Already paid
+                                    </label>
+                                    <input type="number" placeholder="Already paid"
+                                           value={editableOrder?.alreadyPaid || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, alreadyPaid: +e.target.value})}
+                                    />
+                                </div>
                             </div>
-                            <div className = "modal_block">
-                            <label>
-                                Sum
-                            </label>
-                                <input type="number" placeholder="Sum" value={editableOrder?.sum || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, sum: +e.target.value})}
-                                />
+                            <div className="modal_row">
+                                <div className="modal_block">
+                                    <label>
+                                        Email
+                                    </label>
+                                    <input type="email" placeholder="Email" value={editableOrder?.email || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, email: e.target.value})}
+                                    />
+                                </div>
+                                <div className="modal_block">
+                                    <label>
+                                        Course
+                                    </label>
+                                    <select value={editableOrder?.course || ""}
+                                            onChange={(e) =>
+                                                setEditableOrder({...editableOrder, course: e.target.value})}
+                                    >
+                                        {['FS', 'QACX', 'JCX', 'JSCX', 'FE', 'PCX'].map((course) => (
+                                            <option key={course} value={course}
+                                                    selected={course === editableOrder?.course}>
+                                                {course}
+                                            </option>))}
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div className="modal_row">
-                            <div className = "modal_block">
-                            <label>
-                                Surname
-                            </label>
-                                <input type="text" placeholder="Surname" value={editableOrder?.surname || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, surname: e.target.value})}
-                                />
+                            <div className="modal_row">
+                                <div className="modal_block">
+                                    <label>
+                                        Phone
+                                    </label>
+                                    <input type="tel" placeholder="Phone" value={editableOrder?.phone || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, phone: e.target.value})}
+                                    />
+                                </div>
+                                <div className="modal_block">
+                                    <label>
+                                        Course Format
+                                    </label>
+                                    <select value={editableOrder?.courseFormat || ""}
+                                            onChange={(e) =>
+                                                setEditableOrder({...editableOrder, courseFormat: e.target.value})}
+                                    >
+                                        {['static', 'online'].map((format) => (
+                                            <option key={format} value={format}
+                                                    selected={format === editableOrder?.courseFormat}>
+                                                {format}
+                                            </option>))}
+                                    </select>
+                                </div>
                             </div>
-                            <div className = "modal_block">
-                            <label>
-                                Already paid
-                            </label>
-                                <input type="number" placeholder="Already paid" value={editableOrder?.alreadyPaid || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, alreadyPaid: +e.target.value})}
-                                />
+                            <div className="modal_row">
+                                <div className="modal_block">
+                                    <label>
+                                        Age
+                                    </label>
+                                    <input type="number" placeholder="Age" value={editableOrder?.age || ""}
+                                           onChange={(e) =>
+                                               setEditableOrder({...editableOrder, age: +e.target.value})}
+                                    />
+                                </div>
+                                <div className="modal_block">
+                                    <label>
+                                        Course Type
+                                    </label>
+                                    <select value={editableOrder?.courseType || ""}
+                                            onChange={(e) =>
+                                                setEditableOrder({...editableOrder, courseType: e.target.value})}
+                                    >
+                                        {['pro', 'minimal', 'premium', 'incubator', 'vip'].map((type) => (
+                                            <option key={type} value={type}
+                                                    selected={type === editableOrder?.courseType}>
+                                                {type}
+                                            </option>))}
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div className="modal_row">
-                            <div className = "modal_block">
-                            <label>
-                                Email
-                            </label>
-                                <input type="email" placeholder="Email" value={editableOrder?.email || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, email: e.target.value})}
-                                />
+                            <div className="modal_edit_buttons">
+                                <button type="button" onClick={() => setModalInfoOpen(false)}>CLOSE</button>
+                                <button type='submit' form='modal_rows'>SUBMIT</button>
                             </div>
-                            <div className = "modal_block">
-                            <label>
-                                Course
-                            </label>
-                                <select value={editableOrder?.course || ""}
-                                        onChange={(e) =>
-                                            setEditableOrder({...editableOrder, course: e.target.value})}
-                                >
-                                    {['FS', 'QACX', 'JCX', 'JSCX', 'FE', 'PCX'].map((course) => (
-                                        <option key={course} value={course}
-                                                selected={course === editableOrder?.course}>
-                                        {course}
-                                        </option>))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal_row">
-                            <div className = "modal_block">
-                            <label>
-                                Phone
-                            </label>
-                                <input type="tel" placeholder="Phone" value={editableOrder?.phone || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, phone: e.target.value})}
-                                />
-                            </div>
-                            <div className = "modal_block">
-                            <label>
-                                Course Format
-                            </label>
-                                <select value={editableOrder?.courseFormat || ""}
-                                        onChange={(e) =>
-                                            setEditableOrder({...editableOrder, courseFormat: e.target.value})}
-                                >
-                                    {['static', 'online'].map((format) => (
-                                        <option key={format} value={format}
-                                                selected={format === editableOrder?.courseFormat}>
-                                            {format}
-                                        </option>))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal_row">
-                            <div className = "modal_block">
-                            <label>
-                                Age
-                            </label>
-                                <input type="number" placeholder="Age" value={editableOrder?.age || ""}
-                                       onChange={(e) =>
-                                           setEditableOrder({...editableOrder, age: +e.target.value})}
-                                />
-                            </div>
-                            <div className = "modal_block">
-                            <label>
-                                Course Type
-                            </label>
-                                <select value={editableOrder?.courseType || ""}
-                                        onChange={(e) =>
-                                            setEditableOrder({...editableOrder, courseType: e.target.value})}
-                                >
-                                    {['pro', 'minimal', 'premium', 'incubator', 'vip'].map((type) => (
-                                        <option key={type} value={type}
-                                                selected={type === editableOrder?.courseType}>
-                                            {type}
-                                        </option>))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal_button">
-                            <button type="button" onClick={() => setModalInfoOpen(false)}>CLOSE</button>
-                            <button type='submit' form='modal_rows'>SUBMIT</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </ModalComponent>
             </section>
             <div className="pagination">
@@ -686,7 +991,7 @@ const OrdersComponent: React.FC = () => {
                         <span key={index}>...</span>
                     )
                 )}
-                {currentPage + 1 < totalPages + 1 && (
+                {currentPage < totalPages && (
                     <button className='arrow' onClick={() => handlePageChange(currentPage + 1)}>
                         &#62;
                     </button>

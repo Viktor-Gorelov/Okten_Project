@@ -1,5 +1,5 @@
 jwt:
-  secret: wIsmGMq7PwPhXCP5MpU2xi6O8Yptziwm
+  secret: 4cf92dcdf5d91b5b3d25377b9e42d5f2b92cb7a1a7e8364bbf293af3cd932f6a
   access-token:
     ttl-millis: 3600000
   refresh-token:
