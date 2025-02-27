@@ -35,10 +35,8 @@ Before running the project, ensure you have the following installed:
 1. Clone the repository to your local machine:
 
 ```
-git clone <repository-url>
+git clone https://github.com/Viktor-Gorelov/Okten_Project.git
 ```
-
-Replace <repository-url> with the actual URL of the project repository.
 
 2. Build and run the application using Docker:
 
