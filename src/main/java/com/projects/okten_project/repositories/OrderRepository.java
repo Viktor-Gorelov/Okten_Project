@@ -23,12 +23,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "(:courseFormat IS NULL OR o.courseFormat = :courseFormat) AND " +
             "(:courseType IS NULL OR o.courseType = :courseType) AND " +
             "(:status IS NULL OR o.status = :status) AND " +
-            "(:group IS NULL OR o.groupName = :group) AND " +
+            "(:groupName  IS NULL OR o.groupName = :groupName) AND " +
             "(:startDate IS NULL OR :endDate IS NULL OR o.createdAt BETWEEN :startDate AND :endDate) AND " +
             "(:currentUser IS NULL OR o.manager = :currentUser)")
     Page<Order> findOrdersWithFilters(
             String name, String surname, String email, String phone, Integer age,
-            String course, String courseFormat, String courseType, String status, String group,
+            String course, String courseFormat, String courseType, String status, String groupName,
             LocalDateTime startDate, LocalDateTime endDate, String currentUser, Pageable pageable);
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")

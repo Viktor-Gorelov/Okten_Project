@@ -63,30 +63,35 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<AuthResponseDTO> signIn(@RequestBody @Valid AuthRequestDTO authRequestDto) {
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(authRequestDto.getEmail(), authRequestDto.getPassword());
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
-        UserDTO userDTO = userService.loadUserDTOByEmail(authRequestDto.getEmail());
+    public ResponseEntity<?> signIn(@RequestBody @Valid AuthRequestDTO authRequestDto) {
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(authRequestDto.getEmail(), authRequestDto.getPassword());
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            UserDTO userDTO = userService.loadUserDTOByEmail(authRequestDto.getEmail());
 
+            if (!authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
 
-        if (authentication.isAuthenticated()) {
             User user = userService.loadUserByEmail(authRequestDto.getEmail());
 
-            if (Boolean.TRUE.equals(user.getIsBanned())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            if (user.getIsBanned()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is banned");
             }
+
             userDTO.setLastLogin(String.valueOf(OffsetDateTime.now()));
             String accessToken = jwtUtil.generateAccessToken(user);
             String refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
+
             return ResponseEntity.ok(
                     AuthResponseDTO.builder()
                             .accessToken(accessToken)
                             .refreshToken(refreshToken)
                             .build()
             );
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
     }
 

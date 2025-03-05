@@ -3,6 +3,7 @@ import com.projects.okten_project.dto.user.UserDTO;
 import com.projects.okten_project.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,7 @@ public class UserController {
     @GetMapping("/managers")
     public ResponseEntity<Page<UserDTO>> getManagers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "6") int size) {
         return ResponseEntity.ok(userService.getAllManagersWithPagination(page, size));
     }
 
@@ -38,15 +39,23 @@ public class UserController {
     }
 
     @PutMapping("/ban/{id}")
-    public ResponseEntity<Void> banUserById(@PathVariable Long id){
-        userService.banUser(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> banUserById(@PathVariable Long id){
+        try {
+            userService.banUser(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @PutMapping("/unban/{id}")
-    public ResponseEntity<Void> unBanUserById(@PathVariable Long id){
-        userService.unBanUser(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> unBanUserById(@PathVariable Long id){
+        try {
+            userService.unBanUser(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

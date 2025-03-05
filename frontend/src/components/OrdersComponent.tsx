@@ -5,7 +5,7 @@ import {jwtDecode, JwtPayload} from "jwt-decode";
 import {IComment} from "../models/IComment";
 import {ModalComponent} from "./ModalComponent";
 import * as XLSX from "xlsx";
-import HeaderComponent from "./HeaderComponent";
+import PaginationComponent from "./PaginationComponent";
 
 const OrdersComponent: React.FC = () => {
     const [orders, setOrders] = useState<IOrder[]>([]);
@@ -60,7 +60,7 @@ const OrdersComponent: React.FC = () => {
     });
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    let currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const sortField = searchParams.get('sortField') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const navigate = useNavigate();
@@ -183,6 +183,11 @@ const OrdersComponent: React.FC = () => {
     const exportAllOrdersToExcel = async () => {
         try {
             const params = new URLSearchParams(searchParams);
+            if (!params.toString()) {
+                params.set("sortField", "createdAt");
+                params.set("sortOrder", "desc");
+                params.set("page","1");
+            }
             console.log(params)
 
             const firstResponse = await fetch(`/api/orders?${params.toString()}`, {
@@ -212,7 +217,6 @@ const OrdersComponent: React.FC = () => {
             }
 
             const allPages = await Promise.all(pageRequests);
-
             const allOrders = allPages.flatMap((page) => page.content);
 
             const exportData = allOrders.map((order) => ({
@@ -270,7 +274,8 @@ const OrdersComponent: React.FC = () => {
                     const newParams = new URLSearchParams(prevParams);
                     newParams.set("startDate", updatedFilters.startDate);
                     newParams.set("endDate", updatedFilters.endDate);
-                    newParams.set("page", currentPage.toString());
+                    newParams.set("page", "1");
+                    currentPage = 1;
                     newParams.set("sortField", sortField);
                     newParams.set("sortOrder", sortOrder);
                     return newParams;
@@ -289,7 +294,7 @@ const OrdersComponent: React.FC = () => {
                 } else {
                     newParams.delete(name);
                 }
-                newParams.set("page", currentPage.toString());
+                newParams.set("page", "1");
                 newParams.set("sortField", sortField);
                 newParams.set("sortOrder", sortOrder);
                 return newParams;
@@ -362,7 +367,8 @@ const OrdersComponent: React.FC = () => {
             course_format: 'courseFormat',
             course_type: 'courseType',
             already_paid: 'alreadyPaid',
-            created_at: 'createdAt'
+            created_at: 'createdAt',
+            group: 'groupName'
         };
         const sortFieldToSend = fieldMap[field] || field;
         const newSortOrder = sortField === sortFieldToSend && sortOrder === 'asc' ? 'desc' : 'asc';
@@ -561,35 +567,6 @@ const OrdersComponent: React.FC = () => {
     const isValidToken = (token: string | null): boolean => {
         if (!token) return false;
         return token.split('.').length === 3 && !isTokenExpired(token);
-    };
-
-    const generatePagination = () => {
-        const pages = [];
-        const maxVisiblePages = 8;
-        const halfVisible = Math.floor(maxVisiblePages / 2);
-
-        if (totalPages <= maxVisiblePages) {
-            for (let i = 1; i <= totalPages; i++) {
-                pages.push(i);
-            }
-        } else if (currentPage <= halfVisible) {
-            for (let i = 1; i < maxVisiblePages - 2; i++) {
-                pages.push(i);
-            }
-            pages.push('...', totalPages);
-        } else if (currentPage >= totalPages - halfVisible) {
-            pages.push(1, '...');
-            for (let i = totalPages - (maxVisiblePages - 3); i <= totalPages; i++) {
-                pages.push(i);
-            }
-        } else {
-            pages.push(1, '...');
-            for (let i = currentPage - halfVisible + 2; i <= currentPage + halfVisible - 2; i++) {
-                pages.push(i);
-            }
-            pages.push('...', totalPages);
-        }
-        return pages;
     };
 
     return (
@@ -972,31 +949,11 @@ const OrdersComponent: React.FC = () => {
                     </div>
                 </ModalComponent>
             </section>
-            <div className="pagination">
-                {currentPage > 1 && (
-                    <button className='arrow' onClick={() => handlePageChange(currentPage - 1)}>
-                        &#60;
-                    </button>
-                )}
-                {generatePagination().map((page, index) =>
-                    typeof page === 'number' ? (
-                        <button
-                            key={index}
-                            className={page === currentPage ? 'active' : ''}
-                            onClick={() => handlePageChange(page)}
-                        >
-                            {page}
-                        </button>
-                    ) : (
-                        <span key={index}>...</span>
-                    )
-                )}
-                {currentPage < totalPages && (
-                    <button className='arrow' onClick={() => handlePageChange(currentPage + 1)}>
-                        &#62;
-                    </button>
-                )}
-            </div>
+            <PaginationComponent
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+            />
         </div>
     );
 };

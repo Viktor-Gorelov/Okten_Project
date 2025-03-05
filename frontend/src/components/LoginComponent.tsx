@@ -54,11 +54,23 @@ const LoginComponent = () => {
                 body: JSON.stringify({ email: email, password: password }),
             });
 
-            if (!response.ok) {
-                throw new Error('Login failed!');
+            const message = await response.text();
+
+            if (response.status === 403) {
+                setError("User is banned.");
+                return;
             }
 
-            const data = await response.json();
+            if (response.status === 401) {
+                setError("Invalid credentials.");
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error("Login failed!");
+            }
+
+            const data = JSON.parse(message);
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);
             navigate("/orders");

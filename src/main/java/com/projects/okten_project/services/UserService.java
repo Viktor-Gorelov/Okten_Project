@@ -60,7 +60,7 @@ public class UserService implements UserDetailsService {
     }
 
     public Page<UserDTO> getAllManagersWithPagination(int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page - 1, size);
         return userRepository.findAllManagers(pageRequest).map(userMapper::mapToDTO);
     }
 
@@ -108,7 +108,13 @@ public class UserService implements UserDetailsService {
     }
 
     private void changeBanStatus(Long id, boolean banStatus){
-        User user = findUser(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        if (user.getIsBanned() == banStatus) {
+            throw new IllegalStateException("User is already " + (banStatus ? "banned" : "unbanned"));
+        }
+
         user.setIsBanned(banStatus);
         userRepository.save(user);
     }

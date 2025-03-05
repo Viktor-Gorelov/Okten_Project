@@ -86,7 +86,62 @@ The pagination panel operates as follows:
 - Click on any column header to sort applications by that column in **ascending** or **descending** order.
 - The sorting preferences are reflected in the Query Parameters.
 
+Additional column are added:
+- **manager**: Indicates the manager assigned to order;
+- **group**: Indicates the group assigned to order;
 
+Clicking on an application expands its details:
+- The **Message** and **UTM** fields display information from the database table.
+- Input field allows you to enter comments to order.
+- Comments can only be added to applications without an assigned manager or manager is current user.
+- Submitting a comment, the current user's name is recorded in the "manager" column, and the status is set to **In Work** if it was previously null or **New**.
+- The comment, author, and date displayed.
+
+**Modal Window EDIT**
+
+Clicking the **EDIT** open a modal window with an edit form:
+- Only applications without an assigned manager or current user is owner can be edited.
+- All form fields can be left empty.
+- The form include functionality to add a new group directly from the modal window.
+- Performed validation.
+
+**Filtration**
+
+Added inputs and selects for filters of orders:
+- `Name`, `Surname`, `Email`, `Phone`, `Age`, `Start date`, `End date` - inputs for writing;
+- `Courses`, `Course Formats`, `Course Types`, `Statuses`, `Groups` - selects for selection;
+- Filtering by text fields can search for matches across the entire field;
+- There is a checkbox that filters only your applications and a button that clears all filters;
+- Button that will form an Excel table (file) of applications according to your filters;
+
+**Header**
+- Has a logo, current username, button logout and admin button if you admin;
+
+**Admin Panel**
+- Page have statistics of all orders which contains: `Total`, `Agree`, `In Work`, `Disagree`, `Dubbing`, `New`.  
+
+**Modal Window CREATE**
+
+Clicking the **CREATE** open a modal window create manager:
+- For creating manager need enter Email, Name and Surname;
+- After clicking **CREATE** in modal window created manager should be displayed in the list of managers.
+
+**List of Managers**
+- To activate the manager, you need to click on the **ACTIVATE** button, at the same time a link with a token should be generated (token lifetime 30 minutes) for activation and copied to the clipboard;
+- Example: http://bigbird.space/activate/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWN0aXZhdGUiLCJleHAiOjE2OTA5OTAzMTEsImlhdCI6MTY5MDk4OTcxMSwianRpIjoiNzExZTljMjE0YjIxNGY5NDgyOTQwNzg0ZTM3ZjNjZDIiLCJ1c2VyX2lkIjoxMDl9.1tJKW5zZjSbHsTP0zI8QOfSxCtZ—Pxta9j7YjsziDE
+- This link is sent to the manager in any way and when you click on it, you should get to the page for creating a password, after that, the manager can log in and deal with requests.
+
+There are three buttons for each user:
+- **ACTIVATE** if it is not yet activated;
+- **RECOVERY PASSWORD** to recover the password (the flow is the same as during activation);
+- **BAN** to block the user (blocked users cannot log in);
+- **UNBAN** to unblock the user; 
+
+Each manager must have individual statistics on his requests as well as orders;
+
+**Pagination**
+- List of managers are paginated, showing 6 managers per page;
+- By default, managers are sorted in descending order by `created_at`.
 ----
 ## Postman help
 To make a request in Postman, you can follow these steps:
