@@ -19,19 +19,10 @@ const LoginComponent = () => {
             setError('Invalid email format.');
             return false;
         }
-        if (email.length < 8) {
-            setError('Email must be at least 8 characters long.');
-            return false;
-        }
 
 
         if (!password.trim()) {
             setError('Password is required.');
-            return false;
-        }
-
-        if (password.length < 4) {
-            setError('Password must be at least 4 characters long.');
             return false;
         }
 

@@ -26,6 +26,8 @@ public class ErrorController {
             RuntimeException.class
     })
     public ResponseEntity<ErrorDTO> handleExceptions(RuntimeException e) {
+        System.out.println("Handled exception: " + e.getMessage());
+        e.printStackTrace();
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(buildErrorResponse(e));
@@ -40,6 +42,8 @@ public class ErrorController {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        System.out.println("Handled exception: " + ex.getMessage());
+        ex.printStackTrace();
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();

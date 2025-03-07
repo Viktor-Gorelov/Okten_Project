@@ -89,10 +89,13 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO addCommentToOrder(Long order_id, String owner_name, CommentDTO commentDTO) {
+    public OrderDTO addCommentToOrder(Long order_id, String email, CommentDTO commentDTO) {
         Order order = orderRepository.findById(order_id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + order_id));
-        User user = userRepository.findByName(owner_name);
+        User user = userRepository.findByEmail(email);
+        if(user == null){
+            throw new NoSuchElementException("User not found with email: " + email);
+        }
 
         if (order.getManager() != null && !order.getManager().equals(commentDTO.getManager())) {
             throw new IllegalStateException("This order is already managed by another user.");

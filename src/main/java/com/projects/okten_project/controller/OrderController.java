@@ -96,8 +96,8 @@ public class OrderController {
             @PathVariable Long id,
             @RequestBody CommentDTO commentDTO
     ) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        OrderDTO updatedOrder = orderService.addCommentToOrder(id, username, commentDTO);
+        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        OrderDTO updatedOrder = orderService.addCommentToOrder(id, email, commentDTO);
         return ResponseEntity.ok(updatedOrder);
     }
 

@@ -65,6 +65,9 @@ const OrdersComponent: React.FC = () => {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const navigate = useNavigate();
 
+    useEffect(() => {
+        setComment("");
+    }, [expandedOrderId]);
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -76,6 +79,7 @@ const OrdersComponent: React.FC = () => {
             navigate('/login');
             return;
         }
+
 
         const fetchUser = async () => {
             try {
@@ -426,6 +430,7 @@ const OrdersComponent: React.FC = () => {
             );
 
             setComment('');
+            await fetchCommentsForOrder(orderId);
         } catch (error) {
             console.error('Error submitting comment:', error);
             alert('Failed to submit comment. Please try again.');
